@@ -1,11 +1,11 @@
-import Navbar from "./common/components/nav-bar";
-import WelcomeScreen from "./screens/welcome-screen/welcome-screen";
+import { Outlet } from "react-router";
+import Navbar from "./common/components/nav-bar/nav-bar";
 
 const App = () => {
   return (
     <div>
       <Navbar />
-      <WelcomeScreen />
+      <Outlet />
     </div>
   );
 };
