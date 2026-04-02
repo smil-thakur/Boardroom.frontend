@@ -5,13 +5,14 @@ import "./chip.scss";
 interface ChipProps {
   callBack: () => void;
   title: string;
+  disabled: boolean;
 }
 
-const Chip: React.FC<ChipProps> = ({ callBack, title }) => {
+const Chip: React.FC<ChipProps> = ({ callBack, title, disabled }) => {
   return (
     <Item
       variant="outline"
-      className="rounded-[25px] cursor-pointer w-max chip"
+      className={`rounded-[25px] cursor-pointer w-max chip ${disabled ? "cursor-not-allowed" : ""}`}
       onClick={callBack}
     >
       <ItemContent>

@@ -1,6 +1,6 @@
-import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
-import { useEffect, useRef } from 'react';
-import './Galaxy.css';
+import { Renderer, Program, Mesh, Color, Triangle } from "ogl";
+import { useEffect, useRef } from "react";
+import "./Galaxy.css";
 
 const vertexShader = `
 attribute vec2 uv;
@@ -132,7 +132,7 @@ void main() {
   if (uAutoCenterRepulsion > 0.0) {
     vec2 centerUV = vec2(0.0, 0.0);
     float centerDist = length(uv - centerUV);
-    vec2 repulsion = normalize(uv - centerUV) * (uAutoCenterRepulsion / (centerDist + 0.1));
+    vec2 repulsion = normalize(uv - centerUV) * (uAutoCenterRepulsion * uRepulsionStrength / (centerDist + 0.1));
     uv += repulsion * 0.05;
   } else if (uMouseRepulsion) {
     vec2 mousePosUV = (uMouse * uResolution.xy - focalPx) / uResolution.y;
@@ -187,28 +187,32 @@ interface GalaxyProps {
   repulsionStrength?: number;
   autoCenterRepulsion?: number;
   transparent?: boolean;
+  centerRepulsion?: boolean;
 }
 
-export default function Galaxy({
-  focal = [0.5, 0.5],
-  rotation = [1.0, 0.0],
-  starSpeed = 0.5,
-  density = 1,
-  hueShift = 140,
-  disableAnimation = false,
-  speed = 1.0,
-  mouseInteraction = true,
-  glowIntensity = 0.3,
-  saturation = 0.0,
-  mouseRepulsion = true,
-  repulsionStrength = 2,
-  twinkleIntensity = 0.3,
-  rotationSpeed = 0.1,
-  autoCenterRepulsion = 0,
-  transparent = true,
-  ...rest
-}: GalaxyProps) {
+export default function Galaxy(props: GalaxyProps) {
+  const {
+    focal = [0.5, 0.5],
+    rotation = [1.0, 0.0],
+    starSpeed = 0.5,
+    density = 1,
+    hueShift = 140,
+    disableAnimation = false,
+    speed = 1.0,
+    mouseInteraction = true,
+    glowIntensity = 0.3,
+    saturation = 0.0,
+    mouseRepulsion = true,
+    repulsionStrength = 2,
+    twinkleIntensity = 0.3,
+    rotationSpeed = 0.1,
+    autoCenterRepulsion = 0,
+    transparent = true,
+    centerRepulsion = false,
+    ...rest
+  } = props;
   const ctnDom = useRef<HTMLDivElement>(null);
+  // Mouse state for interactive mode
   const targetMousePos = useRef({ x: 0.5, y: 0.5 });
   const smoothMousePos = useRef({ x: 0.5, y: 0.5 });
   const targetMouseActive = useRef(0.0);
@@ -219,7 +223,7 @@ export default function Galaxy({
     const ctn = ctnDom.current;
     const renderer = new Renderer({
       alpha: transparent,
-      premultipliedAlpha: false
+      premultipliedAlpha: false,
     });
     const gl = renderer.gl;
 
@@ -240,21 +244,26 @@ export default function Galaxy({
         program.uniforms.uResolution.value = new Color(
           gl.canvas.width,
           gl.canvas.height,
-          gl.canvas.width / gl.canvas.height
+          gl.canvas.width / gl.canvas.height,
         );
       }
     }
-    window.addEventListener('resize', resize, false);
+    window.addEventListener("resize", resize, false);
     resize();
 
     const geometry = new Triangle(gl);
+    // Determine uniforms based on centerRepulsion prop
     program = new Program(gl, {
       vertex: vertexShader,
       fragment: fragmentShader,
       uniforms: {
         uTime: { value: 0 },
         uResolution: {
-          value: new Color(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height)
+          value: new Color(
+            gl.canvas.width,
+            gl.canvas.height,
+            gl.canvas.width / gl.canvas.height,
+          ),
         },
         uFocal: { value: new Float32Array(focal) },
         uRotation: { value: new Float32Array(rotation) },
@@ -263,18 +272,24 @@ export default function Galaxy({
         uHueShift: { value: hueShift },
         uSpeed: { value: speed },
         uMouse: {
-          value: new Float32Array([smoothMousePos.current.x, smoothMousePos.current.y])
+          value: new Float32Array(
+            centerRepulsion
+              ? [0.5, 0.5]
+              : [smoothMousePos.current.x, smoothMousePos.current.y],
+          ),
         },
         uGlowIntensity: { value: glowIntensity },
         uSaturation: { value: saturation },
-        uMouseRepulsion: { value: mouseRepulsion },
+        uMouseRepulsion: { value: centerRepulsion ? false : mouseRepulsion },
         uTwinkleIntensity: { value: twinkleIntensity },
         uRotationSpeed: { value: rotationSpeed },
         uRepulsionStrength: { value: repulsionStrength },
-        uMouseActiveFactor: { value: 0.0 },
-        uAutoCenterRepulsion: { value: autoCenterRepulsion },
-        uTransparent: { value: transparent }
-      }
+        uMouseActiveFactor: { value: centerRepulsion ? 1.0 : 0.0 },
+        uAutoCenterRepulsion: {
+          value: centerRepulsion ? 1.0 : autoCenterRepulsion,
+        },
+        uTransparent: { value: transparent },
+      },
     });
 
     const mesh = new Mesh(gl, { geometry, program });
@@ -286,17 +301,22 @@ export default function Galaxy({
         program.uniforms.uTime.value = t * 0.001;
         program.uniforms.uStarSpeed.value = (t * 0.001 * starSpeed) / 10.0;
       }
-
-      const lerpFactor = 0.05;
-      smoothMousePos.current.x += (targetMousePos.current.x - smoothMousePos.current.x) * lerpFactor;
-      smoothMousePos.current.y += (targetMousePos.current.y - smoothMousePos.current.y) * lerpFactor;
-
-      smoothMouseActive.current += (targetMouseActive.current - smoothMouseActive.current) * lerpFactor;
-
-      program.uniforms.uMouse.value[0] = smoothMousePos.current.x;
-      program.uniforms.uMouse.value[1] = smoothMousePos.current.y;
-      program.uniforms.uMouseActiveFactor.value = smoothMouseActive.current;
-
+      if (centerRepulsion) {
+        program.uniforms.uMouse.value[0] = 0.5;
+        program.uniforms.uMouse.value[1] = 0.5;
+        program.uniforms.uMouseActiveFactor.value = 1.0;
+      } else {
+        const lerpFactor = 0.05;
+        smoothMousePos.current.x +=
+          (targetMousePos.current.x - smoothMousePos.current.x) * lerpFactor;
+        smoothMousePos.current.y +=
+          (targetMousePos.current.y - smoothMousePos.current.y) * lerpFactor;
+        smoothMouseActive.current +=
+          (targetMouseActive.current - smoothMouseActive.current) * lerpFactor;
+        program.uniforms.uMouse.value[0] = smoothMousePos.current.x;
+        program.uniforms.uMouse.value[1] = smoothMousePos.current.y;
+        program.uniforms.uMouseActiveFactor.value = smoothMouseActive.current;
+      }
       renderer.render({ scene: mesh });
     }
     animateId = requestAnimationFrame(update);
@@ -314,20 +334,20 @@ export default function Galaxy({
       targetMouseActive.current = 0.0;
     }
 
-    if (mouseInteraction) {
-      ctn.addEventListener('mousemove', handleMouseMove);
-      ctn.addEventListener('mouseleave', handleMouseLeave);
+    if (!centerRepulsion && mouseInteraction) {
+      ctn.addEventListener("mousemove", handleMouseMove);
+      ctn.addEventListener("mouseleave", handleMouseLeave);
     }
 
     return () => {
       cancelAnimationFrame(animateId);
-      window.removeEventListener('resize', resize);
-      if (mouseInteraction) {
-        ctn.removeEventListener('mousemove', handleMouseMove);
-        ctn.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener("resize", resize);
+      if (!centerRepulsion && mouseInteraction) {
+        ctn.removeEventListener("mousemove", handleMouseMove);
+        ctn.removeEventListener("mouseleave", handleMouseLeave);
       }
       ctn.removeChild(gl.canvas);
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
   }, [
     focal,
@@ -345,7 +365,8 @@ export default function Galaxy({
     rotationSpeed,
     repulsionStrength,
     autoCenterRepulsion,
-    transparent
+    transparent,
+    centerRepulsion,
   ]);
 
   return <div ref={ctnDom} className="galaxy-container" {...rest} />;
