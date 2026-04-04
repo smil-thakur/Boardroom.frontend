@@ -1,14 +1,13 @@
 import "./welcome-screen.scss";
-import { Textarea } from "@/components/ui/textarea";
 import { getRandomChips } from "@/constants/try-it-ideas";
 import Chip from "@/common/components/chip/chip";
 import Galaxy from "@/components/Galaxy";
 import { useTheme } from "@/components/theme-provider";
 import { useEffect, useState, type BaseSyntheticEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { Mic, SendHorizonal } from "lucide-react";
+
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
+import PromptArea from "@/common/prompt-area/prompt-area";
 
 const WelcomeScreen = () => {
   const [chips, setChips] = useState<string[]>(getRandomChips());
@@ -80,31 +79,16 @@ const WelcomeScreen = () => {
             "Five AI executives. One idea. Total chaos."
           )}
         </motion.h1>
-        <div className="mobile-width mt-32 mb-4 z-1 flex flex-col w-full items-center gap-2 border-2 p-2 rounded-lg bg-background">
-          <Textarea
-            disabled={summoningBoard}
-            id="idea-input"
+        <div className="mt-32 mb-4 z-1 mobile-width">
+          <PromptArea
+            inputDisabled={summoningBoard}
             value={promptValue}
-            onChange={handleInputChange}
-            placeholder="I want to build a....."
-            className="max-h-32 z-1"
+            onValueChange={handleInputChange}
+            buttonLabel="summon the board"
+            buttonDisabled={sendBtnDisabled || summoningBoard}
+            onClick={handleSummonAgent}
+            placeholder="I want to build..."
           />
-          <div className="flex justify-between w-full">
-            <div>
-              <Button>
-                <Mic />
-              </Button>
-            </div>
-            <div>
-              <Button
-                onClick={handleSummonAgent}
-                disabled={sendBtnDisabled || summoningBoard}
-              >
-                Summon the board
-                <SendHorizonal />
-              </Button>
-            </div>
-          </div>
         </div>
         <motion.div
           className="chips-grid z-1"

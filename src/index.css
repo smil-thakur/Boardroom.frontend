@@ -132,10 +132,13 @@
 .content-wrapper {
   min-height: calc(100dvh - 44px);
   margin-top: 44px;
-  max-width: 1366px;
+  width: 1366px;
   margin-left: auto;
   margin-right: auto;
   padding: 24px;
+  &.fixed-height {
+    height: calc(100dvh - 44px);
+  }
 }
 
 .content-wrapper.mobile {
@@ -143,5 +146,5 @@
 }
 
 .mobile-width {
-  max-width: 768px;
+  width: 768px;
 }
