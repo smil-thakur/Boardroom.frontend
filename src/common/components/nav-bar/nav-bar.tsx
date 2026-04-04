@@ -8,7 +8,7 @@ const renderNavContent = (content: NavContent) => {
   if (!content) return null;
   switch (content.type) {
     case "agents":
-      return <AgentLiveAvatar activeAgent={content.activeAgent} />;
+      return <AgentLiveAvatar />;
     default:
       break;
   }
