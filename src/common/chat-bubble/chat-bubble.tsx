@@ -1,4 +1,4 @@
-import { agentClassBorder, type AgentsType } from "@/constants/contants";
+import { agentClass, agentClassBorder, type AgentsType } from "@/constants/contants";
 import type React from "react";
 import AgentMessage from "../agent-message.tsx/agent-message";
 
@@ -9,10 +9,15 @@ interface ChatBubbleProps {
 
 const ChatBubble: React.FC<ChatBubbleProps> = ({ agentId, content }) => {
   return (
-    <div
-      className={`${agentClassBorder[agentId]} border p-2 rounded-md max-w-xl bg-card`}
-    >
-      <AgentMessage content={content}></AgentMessage>
+    <div className="flex flex-col gap-1.5 mb-2 group">
+      <div className={`${agentClass[agentId]} w-fit px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border shadow-sm`}>
+        {agentId}
+      </div>
+      <div
+        className={`${agentClassBorder[agentId]} border p-4 rounded-2xl rounded-tl-none max-w-xl bg-card/70 backdrop-blur-md shadow-sm transition-all hover:shadow-lg hover:shadow-${agentId === 'CEO' ? 'amber' : agentId === 'CFO' ? 'green' : agentId === 'CTO' ? 'blue' : agentId === 'CMO' ? 'rose' : 'violet'}-500/10`}
+      >
+        <AgentMessage content={content}></AgentMessage>
+      </div>
     </div>
   );
 };

@@ -8,6 +8,7 @@ import { useEffect, useState, type BaseSyntheticEvent } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import PromptArea from "@/common/prompt-area/prompt-area";
+import { useDebate } from "@/hooks/use-debate";
 
 const WelcomeScreen = () => {
   const [chips, setChips] = useState<string[]>(getRandomChips());
@@ -20,6 +21,7 @@ const WelcomeScreen = () => {
   const [sendBtnDisabled, setSendBtnDisabled] = useState<boolean>(true);
   const [promptValue, setPromptValue] = useState<string>("");
   const [summoningBoard, setSummoningBoard] = useState<boolean>(false);
+  const {startDebate} = useDebate();
   const handleInputChange = (e: BaseSyntheticEvent) => {
     const input = e.target as HTMLTextAreaElement;
     const value = input.value;
@@ -32,6 +34,7 @@ const WelcomeScreen = () => {
   };
   const handleSummonAgent = async () => {
     setSummoningBoard(true);
+    startDebate(promptValue)
     await new Promise((resolve) => setTimeout(resolve, 5000));
     navigate("/boardroom");
   };
