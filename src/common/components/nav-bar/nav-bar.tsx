@@ -33,6 +33,9 @@ const Navbar = () => {
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => (window.location.href = "/history")}>
+                My History
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => signOut(auth)}>
                 SignOut
               </DropdownMenuItem>

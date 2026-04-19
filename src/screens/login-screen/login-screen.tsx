@@ -15,10 +15,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { LoginUser, LoginUserViaGoogle } from "@/firebase/login-user";
 import { LoginFormSchema, type LoginFormValues } from "@/forms/login-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { auth } from "@/firebase/intialize-firebase";
 
 import { useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useNavigate } from "react-router";
+import VerificationDialog from "@/components/verification-dialog/verification-dialog";
 
 const LoginScreen = () => {
   const navigate = useNavigate();
@@ -42,11 +44,35 @@ const LoginScreen = () => {
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [proceedingViaGoogle, setProceedingViaGoogle] =
     useState<boolean>(false);
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+
+  // Check for existing unverified session on mount
+  useState(() => {
+    const checkVerification = () => {
+      const user = auth.currentUser;
+      if (user && !user.emailVerified) {
+        setShowVerificationDialog(true);
+      }
+    };
+    checkVerification();
+  });
 
   const handleLoginUser: SubmitHandler<LoginFormValues> = async (data) => {
     setIsLoggingIn(true);
-    await LoginUser(data.email, data.password);
-    setIsLoggingIn(false);
+    try {
+      await LoginUser(data.email, data.password);
+      
+      const user = auth.currentUser;
+      if (user && !user.emailVerified) {
+        setShowVerificationDialog(true);
+      }
+    } catch (err) {
+      console.error("Login component error:", err);
+      // Explicitly reset on catch just in case finally has issues in some edge cases
+      setIsLoggingIn(false);
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   const handleProceedWithGoogle = async () => {
@@ -61,84 +87,91 @@ const LoginScreen = () => {
   };
 
   return (
-    <div className="content-wrapper flex items-center justify-center">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
-          <CardAction>
-            <Button
-              disabled={isLoggingIn || proceedingViaGoogle}
-              variant="link"
-              onClick={handleNavigateSignUp}
-            >
-              Sign Up
-            </Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(handleLoginUser)}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  {...register("email")}
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                />
-                {errors.email && (
-                  <FieldError>{errors.email.message}</FieldError>
-                )}
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
+    <>
+      <VerificationDialog 
+        isOpen={showVerificationDialog} 
+        onClose={() => setShowVerificationDialog(false)} 
+      />
+      
+      <div className="content-wrapper flex items-center justify-center">
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle>Login to your account</CardTitle>
+            <CardDescription>
+              Enter your email below to login to your account
+            </CardDescription>
+            <CardAction>
+              <Button
+                disabled={isLoggingIn || proceedingViaGoogle}
+                variant="link"
+                onClick={handleNavigateSignUp}
+              >
+                Sign Up
+              </Button>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(handleLoginUser)}>
+              <div className="flex flex-col gap-6">
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    {...register("email")}
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    required
+                  />
+                  {errors.email && (
+                    <FieldError>{errors.email.message}</FieldError>
+                  )}
                 </div>
-                <Input
-                  {...register("password")}
-                  id="password"
-                  type="password"
-                  required
-                />
-                {errors.password && (
-                  <FieldError>{errors.password.message}</FieldError>
-                )}
+                <div className="grid gap-2">
+                  <div className="flex items-center">
+                    <Label htmlFor="password">Password</Label>
+                    <a
+                      href="#"
+                      className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    >
+                      Forgot your password?
+                    </a>
+                  </div>
+                  <Input
+                    {...register("password")}
+                    id="password"
+                    type="password"
+                    required
+                  />
+                  {errors.password && (
+                    <FieldError>{errors.password.message}</FieldError>
+                  )}
+                </div>
               </div>
-            </div>
-          </form>
-        </CardContent>
-        <CardFooter className="flex-col gap-2">
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoggingIn || proceedingViaGoogle}
-            onClick={handleSubmit(handleLoginUser)}
-          >
-            {isLoggingIn && <Spinner data-icon="line-start" />}
-            Login
-          </Button>
-          <Button
-            onClick={handleProceedWithGoogle}
-            disabled={isLoggingIn || proceedingViaGoogle}
-            variant="outline"
-            className="w-full"
-          >
-            {proceedingViaGoogle && <Spinner data-icon="inline-start" />}
-            Proceed with Google
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+            </form>
+          </CardContent>
+          <CardFooter className="flex-col gap-2">
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoggingIn || proceedingViaGoogle}
+              onClick={handleSubmit(handleLoginUser)}
+            >
+              {isLoggingIn && <Spinner data-icon="inline-start" />}
+              Login
+            </Button>
+            <Button
+              onClick={handleProceedWithGoogle}
+              disabled={isLoggingIn || proceedingViaGoogle}
+              variant="outline"
+              className="w-full"
+            >
+              {proceedingViaGoogle && <Spinner data-icon="inline-start" />}
+              Proceed with Google
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    </>
   );
 };
 

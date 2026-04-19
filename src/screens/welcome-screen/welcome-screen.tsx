@@ -3,68 +3,86 @@ import { getRandomChips } from "@/constants/try-it-ideas";
 import Chip from "@/common/components/chip/chip";
 import Galaxy from "@/components/Galaxy";
 import { useTheme } from "@/components/theme-provider";
-import { useEffect, useState, type BaseSyntheticEvent } from "react";
+import { useEffect, useState } from "react";
 
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import PromptArea from "@/common/prompt-area/prompt-area";
 import { useDebate } from "@/hooks/use-debate";
+import { useSessions } from "@/hooks/use-sessions";
+import UsageLimitDialog from "@/components/usage-limit-dialog/usage-limit-dialog";
 
 const WelcomeScreen = () => {
   const [chips, setChips] = useState<string[]>(getRandomChips());
   const theme = useTheme();
   const navigate = useNavigate();
+  
+  const [sendBtnDisabled, setSendBtnDisabled] = useState<boolean>(true);
+  const [promptValue, setPromptValue] = useState<string>("");
+  const [summoningBoard, setSummoningBoard] = useState<boolean>(false);
+  const [showLimitDialog, setShowLimitDialog] = useState<boolean>(false);
+
+  const { startDebate } = useDebate();
+  const { data: sessions = [] } = useSessions();
+
   const handleChipClick = (title: string) => {
     setPromptValue(title);
     setSendBtnDisabled(false);
   };
-  const [sendBtnDisabled, setSendBtnDisabled] = useState<boolean>(true);
-  const [promptValue, setPromptValue] = useState<string>("");
-  const [summoningBoard, setSummoningBoard] = useState<boolean>(false);
-  const {startDebate} = useDebate();
-  const handleInputChange = (e: BaseSyntheticEvent) => {
-    const input = e.target as HTMLTextAreaElement;
-    const value = input.value;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement> | { target: { value: string } }) => {
+    const value = e.target.value;
     setPromptValue(value);
-    if (value) {
-      setSendBtnDisabled(false);
-    } else {
-      setSendBtnDisabled(true);
-    }
+    setSendBtnDisabled(!value);
   };
+
   const handleSummonAgent = async () => {
+    // Idea Cap: Max 2 ideas
+    if (sessions.length >= 2) {
+      setShowLimitDialog(true);
+      return;
+    }
+
     setSummoningBoard(true);
-    startDebate(promptValue)
+    startDebate(promptValue);
     await new Promise((resolve) => setTimeout(resolve, 5000));
     navigate("/boardroom");
   };
 
   useEffect(() => {
-    setInterval(() => {
+    const interval = setInterval(() => {
       setChips([...getRandomChips()]);
     }, 6000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
     <>
+      <UsageLimitDialog 
+        isOpen={showLimitDialog} 
+        onClose={() => setShowLimitDialog(false)} 
+        title="Idea Limit Reached"
+        description="Your free tier allows for 2 boardroom ideas. Clear or archive old ideas to start something new."
+      />
+      
       <div
+        className="fixed inset-0"
         style={{
           width: "100%",
           height: "calc(100% - 44px)",
-          position: "absolute",
         }}
       >
         <Galaxy
           twinkleIntensity={0.3}
           density={0.6}
           glowIntensity={theme.theme === "light" ? 0.05 : 0.3}
-          centerRepulsion={summoningBoard ? true : false}
+          centerRepulsion={summoningBoard}
           repulsionStrength={summoningBoard ? 10 : 1}
         />
       </div>
-      <div className="content-wrapper flex items-center justify-start flex-col">
+      <div className="content-wrapper flex items-center justify-start flex-col px-4 md:px-8">
         <motion.h1
-          className="text-8xl mt-16 z-1 text-center header font-bold"
+          className="text-4xl sm:text-6xl md:text-8xl mt-12 md:mt-16 z-1 text-center header font-bold leading-tight"
           key={summoningBoard ? "initial" : "summoning"}
           initial={{ opacity: 0, y: 20 }}
           animate={{
@@ -82,7 +100,7 @@ const WelcomeScreen = () => {
             "Five AI executives. One idea. Total chaos."
           )}
         </motion.h1>
-        <div className="mt-32 mb-4 z-1 mobile-width">
+        <div className="mt-16 md:mt-32 mb-6 z-1 w-full max-w-3xl">
           <PromptArea
             inputDisabled={summoningBoard}
             value={promptValue}
@@ -94,7 +112,7 @@ const WelcomeScreen = () => {
           />
         </div>
         <motion.div
-          className="chips-grid z-1"
+          className="flex flex-wrap gap-2 justify-center z-10"
           key={chips.toString()}
           initial={{ opacity: 0 }}
           animate={{

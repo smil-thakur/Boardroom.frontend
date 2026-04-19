@@ -46,6 +46,7 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-5xl: calc(var(--radius) * 3);
 }
 
 :root {
@@ -123,6 +124,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
   }
   html {
     @apply font-sans;
@@ -136,18 +138,21 @@
   max-width: 1366px;
   margin-left: auto;
   margin-right: auto;
-  padding: 24px;
+  padding: 16px;
+  @apply md:p-6;
   &.fixed-height {
     height: calc(100dvh - 44px);
   }
-}
-
-.content-wrapper.mobile {
-  max-width: 768px;
+  &.mt-0{
+    margin-top: 0px;
+  }
 }
 
 .mobile-width {
-  width: 768px;
+  width: 100%;
+  max-width: 768px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 @keyframes shimmer {

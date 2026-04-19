@@ -21,7 +21,7 @@ import {
 import { useState } from "react";
 import { CreateUser } from "@/firebase/create-user";
 import { Spinner } from "@/components/ui/spinner";
-import { LoginUser, LoginUserViaGoogle } from "@/firebase/login-user";
+import { LoginUserViaGoogle } from "@/firebase/login-user";
 
 const RegisterScreen = () => {
   const navigate = useNavigate();
@@ -51,7 +51,8 @@ const RegisterScreen = () => {
     setRegisteringUser(true);
     try {
       await CreateUser(data.username, data.email, data.password);
-      await LoginUser(data.email, data.password);
+      // Success is handled in CreateUser toast + redirection here
+      navigate("/login");
     } catch (err) {
       console.error(err);
     } finally {
@@ -63,6 +64,8 @@ const RegisterScreen = () => {
     try {
       setProceedingViaGoogle(true);
       await LoginUserViaGoogle();
+      // Google users are usually auto-verified or handled by Firebase differently
+      // but if needed we can check verification here too.
     } catch (err) {
       console.log(err);
     } finally {
@@ -76,7 +79,7 @@ const RegisterScreen = () => {
         <CardHeader>
           <CardTitle>Create an account</CardTitle>
           <CardDescription>
-            Enter your details below to register a new account
+            Enter your details below to register a new account. You'll need to verify your email.
           </CardDescription>
           <CardAction>
             <Button

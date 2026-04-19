@@ -7,6 +7,8 @@ import ProtectedRoute from "./protected-route";
 import RegisterScreen from "@/screens/login-screen/register-screen";
 import LoginRoutes from "./login-routes";
 
+import HistoryScreen from "../screens/history-screen/history-screen";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -36,6 +38,10 @@ const router = createBrowserRouter([
           {
             path: "/boardroom",
             element: <BoardroomScreen />,
+          },
+          {
+            path: "/history",
+            element: <HistoryScreen />,
           },
         ],
       },
