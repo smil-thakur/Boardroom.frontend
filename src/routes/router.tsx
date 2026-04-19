@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createHashRouter } from "react-router";
 import App from "../App";
 import WelcomeScreen from "../screens/welcome-screen/welcome-screen";
 import BoardroomScreen from "../screens/boardroom-screen/boardroom-screen";
@@ -9,7 +9,7 @@ import LoginRoutes from "./login-routes";
 
 import HistoryScreen from "../screens/history-screen/history-screen";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <App />,

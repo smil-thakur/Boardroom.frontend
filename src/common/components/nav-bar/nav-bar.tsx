@@ -11,13 +11,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "firebase/auth";
 import { auth } from "@/firebase/intialize-firebase";
+import { useNavigate } from "react-router";
 
 const Navbar = () => {
   const user = useUserStateStore((state) => state.user);
+  const navigate = useNavigate();
 
   return (
     <div className="flex justify-between px-4 py-2 nav-bar">
-      <div className="logo">
+      <div className="logo cursor-pointer" onClick={() => navigate("/")}>
         <Logo />
       </div>
       <div className="flex-1 main flex justify-center items-center"></div>
@@ -25,7 +27,7 @@ const Navbar = () => {
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Avatar>
+              <Avatar className="cursor-pointer">
                 <AvatarImage src={user.photoURL ?? ""} />
                 <AvatarFallback>
                   {user.displayName?.substring(0, 2)}
@@ -33,7 +35,7 @@ const Navbar = () => {
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => (window.location.href = "/history")}>
+              <DropdownMenuItem onClick={() => navigate("/history")}>
                 My History
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => signOut(auth)}>
