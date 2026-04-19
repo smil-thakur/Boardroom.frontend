@@ -46,10 +46,20 @@ export const useDebate = () => {
     [appendMessage, setGeneratingAgent, setError, disconnect],
   );
 
+  const getWebSocketURL = () => {
+    const envURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+    const wsProtocol = envURL.startsWith("https") ? "wss" : "ws";
+    const wsURL = envURL.replace(/^https?/, wsProtocol);
+    const baseURL = wsURL.includes("/api/v1")
+      ? wsURL
+      : `${wsURL.replace(/\/$/, "")}/api/v1`;
+    return `${baseURL.replace(/\/$/, "")}/debate/ws/chat`;
+  };
+
   const startDebate = useCallback(
     (idea: string) => {
       setStartUpIdea(idea);
-      connect("ws://localhost:8000/api/v1/debate/ws/chat", (event) => {
+      connect(getWebSocketURL(), (event) => {
         handleMessages(event);
       });
 
